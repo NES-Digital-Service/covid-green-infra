@@ -11,6 +11,10 @@ output "cloudtrail_log_group_name" {
   value = join(" ", aws_cloudwatch_log_group.cloudtrail.*.name)
 }
 
+output "default_tags" {
+  value = module.labels.tags
+}
+
 output "ecs_cluster_api_service_name" {
   value = aws_ecs_service.api.name
 }
@@ -55,12 +59,28 @@ output "lambda_names" {
   )
 }
 
+output "lambda_sg_id" {
+  value = module.lambda_sg.id
+}
+
+output "lb_api_arn" {
+  value = aws_lb.api.arn
+}
+
 output "lb_api_arn_suffix" {
   value = aws_lb.api.arn_suffix
 }
 
+output "lb_push_arn" {
+  value = aws_lb.push.arn
+}
+
 output "lb_push_arn_suffix" {
   value = aws_lb.push.arn_suffix
+}
+
+output "prefix_id" {
+  value = module.labels.id
 }
 
 output "private_subnets" {

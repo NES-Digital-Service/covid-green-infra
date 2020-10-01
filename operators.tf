@@ -38,6 +38,28 @@ data "aws_iam_policy_document" "operators" {
     resources = [data.aws_secretsmanager_secret_version.rds_read_only.arn]
   }
 
+  # Allow own MFA management
+  # See https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_examples_aws_my-sec-creds-self-manage.html
+  # For the $${user_name} escaping see https://github.com/terraform-providers/terraform-provider-aws/issues/5984#issuecomment-424470589
+  statement {
+    actions = [
+      "iam:CreateVirtualMFADevice",
+      "iam:DeleteVirtualMFADevice"
+    ]
+    resources = [format("arn:aws:iam::%s:mfa/$${aws:username}", data.aws_caller_identity.current.account_id)]
+    sid       = "AllowManageOwnVirtualMFADevice"
+  }
+  statement {
+    actions = [
+      "iam:DeactivateMFADevice",
+      "iam:EnableMFADevice",
+      "iam:ListMFADevices",
+      "iam:ResyncMFADevice"
+    ]
+    resources = [format("arn:aws:iam::%s:user/$${aws:username}", data.aws_caller_identity.current.account_id)]
+    sid       = "AllowManageOwnUserMFA"
+  }
+
   # Conditional
   # PENDING: This works from the CLI without autoscaling:UpdateAutoScalingGroup but we need autoscaling:UpdateAutoScalingGroup to work in the console
   # autoscaling:UpdateAutoScalingGroup is too permissive

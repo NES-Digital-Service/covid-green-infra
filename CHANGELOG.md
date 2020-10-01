@@ -3,7 +3,68 @@
 All notable changes to this project will be documented in this file.
 
 
-## [Unreleased]
+## [v0.1.9] 2020-09-29
+- Removed: Cloudwatch dashboard
+- Added: Bastion "bastion_instance_type" variable
+- Added: Push API TLS policy as a parameter
+- Changed: Modified lambda exposures default timeout
+- Changed: Modified lambda exposures default memory allocation
+- Added: Added extra ci-user privs to add vertical annotations to cloudwatch graphs
+- Added: Push API TLS policy as a parameter
+
+
+## [v0.1.8] 2020-09-23
+- Added: Added "attach_waf" variable to attach/detach WAF to ALBs and API Gateway
+- Added: Added "disable_valid_key_check" variable to flag whether to disable check if key is still valid when generating export files
+- Added: Added "variance_offset_mins" variable to add to lifetime of keys to check if they are still valid
+- Added: Added "onset_date_mandatory" variable to control whether onsetDate/symptomDate is mandatory
+- Added: New "api_gateway_minimum_compression_size" to allow compression configuration on the APIGateway
+- Added: New variables to control ECS scaling adjustments
+	- api_ecs_autoscale_scale_down_adjustment
+	- api_ecs_autoscale_scale_up_adjustment
+	- push_ecs_autoscale_scale_down_adjustment
+	- push_ecs_autoscale_scale_up_adjustment
+- Added: SUPPORT_REQUESTS.md
+- Added: Headers Cache-Control, Pragma, Strict-Transport-Security
+- Changed: Push API TLS 1.2 enforcement
+
+
+## [v0.1.7] 2020-09-17
+- Updated: Set "upload_max_keys" to "15" by default due to ENS changes
+- Updated: moved lambda common resources in a separate file
+- Updated: Added outputs: lambda security group, default tags, resources prefix id
+- Removed: Redundant aws providers with aliases "us" and "root", we no longer use these
+- Removed: Redundant template provider - we no longer use
+- Added: Include additional mock APIGateway for HEAD /api/healthcheck
+- Added: Added "db_pool_size" variable to control pg max pool size - Can be used by ECS API and ECS Push services
+- Updated: Allow stats lambda to access "time_zone" parameter
+- Updated: Added additional resources to the operators group policy for MFA
+- Fix: Adjusted values displayed in the CloudWatch dashboard, so take into consideration doubled logs in ApiGateway logs
+
+
+## [v0.1.6] 2020-09-10
+- Updated: CloudWatch dashboard to include more distinct metrics for ALB requests
+- Updated: CloudWatch dashboard RDS connections sum changed to average
+- Updated: Module versions, needed to ensure they result in no changes
+	- alb.tf - Went with v8.2.0, cannot use latest as it requires AWS provider v3+ and TF v0.13+
+	- labels.tf - Went with v0.19.2, is the latest at this time
+	- networking.tf	- Went with v2.48.0, is the latest at this time
+	- rds.tf - Went with v0.31.0, cannot use latest, as it results in changes
+- Fix: Parameter "upload_token_lifetime_mins" was using the wrong variable value
+- Updated: Operators role can manage their MFA
+- Added: extra properties to configure SNS SMS preferences
+- Fix: sms cross region setup
+- Updated: Alter terraform version requirement so we can start using v0.13.*, we now have >= 0.12.29 < 0.14
+- Added: Enabled encryption on the CloudTrail and assets S3 buckets
+
+
+## [v0.1.5] 2020-09-09
+- Added: Included the ALB arns (api and push) as outputs
+- Updated: Fixed "time_zone" parameter value - used incorrect value previously
+- Added: Added parameter "security_code_removal_mins" to control number of minutes before a one-time upload code is removed from the database by the cleanup lambda
+- Added: Added parameter "upload_max_keys" to control maximum number of keys accepted per upload request
+- Added: Added option to configure SNS SMS spent quota
+- Added: Added option to configure SNS SMS delivery logs
 
 
 ## [v0.1.4] 2020-09-04

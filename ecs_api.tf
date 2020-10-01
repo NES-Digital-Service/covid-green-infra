@@ -38,6 +38,7 @@ data "aws_iam_policy_document" "api_ecs_task_policy" {
       aws_ssm_parameter.cors_origin.arn,
       aws_ssm_parameter.db_database.arn,
       aws_ssm_parameter.db_host.arn,
+      aws_ssm_parameter.db_pool_size.arn,
       aws_ssm_parameter.db_port.arn,
       aws_ssm_parameter.db_reader_host.arn,
       aws_ssm_parameter.db_ssl.arn,
@@ -46,6 +47,7 @@ data "aws_iam_policy_document" "api_ecs_task_policy" {
       aws_ssm_parameter.enable_check_in.arn,
       aws_ssm_parameter.enable_legacy_settings.arn,
       aws_ssm_parameter.enable_metrics.arn,
+      aws_ssm_parameter.hsts_max_age.arn,
       aws_ssm_parameter.jwt_issuer.arn,
       aws_ssm_parameter.log_level.arn,
       aws_ssm_parameter.metrics_config.arn,
@@ -55,6 +57,7 @@ data "aws_iam_policy_document" "api_ecs_task_policy" {
       aws_ssm_parameter.security_token_lifetime_mins.arn,
       aws_ssm_parameter.security_verify_rate_limit_secs.arn,
       aws_ssm_parameter.time_zone.arn,
+      aws_ssm_parameter.upload_max_keys.arn,
       aws_ssm_parameter.upload_token_lifetime_mins.arn
     ]
   }
@@ -153,16 +156,18 @@ resource "aws_ecs_service" "api" {
 }
 
 module "api_autoscale" {
-  source                      = "./modules/ecs-autoscale-service"
-  ecs_cluster_resource_name   = aws_ecs_cluster.services.name
-  service_resource_name       = aws_ecs_service.api.name
-  ecs_autoscale_max_instances = var.api_ecs_autoscale_max_instances
-  ecs_autoscale_min_instances = var.api_ecs_autoscale_min_instances
-  ecs_as_cpu_high_threshold   = var.api_cpu_high_threshold
-  ecs_as_cpu_low_threshold    = var.api_cpu_low_threshold
-  ecs_as_mem_high_threshold   = var.api_mem_high_threshold
-  ecs_as_mem_low_threshold    = var.api_mem_low_threshold
-  tags                        = module.labels.tags
+  source                              = "./modules/ecs-autoscale-service"
+  ecs_cluster_resource_name           = aws_ecs_cluster.services.name
+  service_resource_name               = aws_ecs_service.api.name
+  ecs_autoscale_max_instances         = var.api_ecs_autoscale_max_instances
+  ecs_autoscale_min_instances         = var.api_ecs_autoscale_min_instances
+  ecs_autoscale_scale_down_adjustment = var.api_ecs_autoscale_scale_down_adjustment
+  ecs_autoscale_scale_up_adjustment   = var.api_ecs_autoscale_scale_up_adjustment
+  ecs_as_cpu_high_threshold           = var.api_cpu_high_threshold
+  ecs_as_cpu_low_threshold            = var.api_cpu_low_threshold
+  ecs_as_mem_high_threshold           = var.api_mem_high_threshold
+  ecs_as_mem_low_threshold            = var.api_mem_low_threshold
+  tags                                = module.labels.tags
 }
 
 # #########################################
