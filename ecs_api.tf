@@ -30,7 +30,7 @@ resource "aws_iam_role" "api_ecs_task_role" {
 data "aws_iam_policy_document" "api_ecs_task_policy" {
   statement {
     actions = ["ssm:GetParameter"]
-    resources = [
+    resources = concat([
       aws_ssm_parameter.api_host.arn,
       aws_ssm_parameter.api_port.arn,
       aws_ssm_parameter.callback_url.arn,
@@ -58,19 +58,32 @@ data "aws_iam_policy_document" "api_ecs_task_policy" {
       aws_ssm_parameter.security_verify_rate_limit_secs.arn,
       aws_ssm_parameter.time_zone.arn,
       aws_ssm_parameter.upload_max_keys.arn,
-      aws_ssm_parameter.upload_token_lifetime_mins.arn
-    ]
+      aws_ssm_parameter.upload_token_lifetime_mins.arn,
+      aws_ssm_parameter.self_isolation_notice_lifetime_mins.arn,
+      aws_ssm_parameter.notices_sqs_arn.arn,
+      aws_ssm_parameter.enable_self_isolation_notices.arn,
+      aws_ssm_parameter.self_isolation_notices_url.arn,
+      aws_ssm_parameter.security_self_isolation_notices_rate_limit_secs.arn
+      ],
+      aws_ssm_parameter.security_callback_rate_limit_request_count.*.arn,
+      aws_ssm_parameter.security_callback_rate_limit_secs.*.arn,
+      aws_ssm_parameter.security_allow_no_token.*.arn,
+      aws_ssm_parameter.security_token_lifetime_no_refresh.*.arn,
+      aws_ssm_parameter.verify_proxy_url.*.arn
+    )
   }
 
   statement {
     actions = ["secretsmanager:GetSecretValue"]
-    resources = [
+    resources = concat([
       data.aws_secretsmanager_secret_version.device_check.arn,
       data.aws_secretsmanager_secret_version.encrypt.arn,
       data.aws_secretsmanager_secret_version.jwt.arn,
       data.aws_secretsmanager_secret_version.rds_read_write_create.arn,
       data.aws_secretsmanager_secret_version.verify.arn
-    ]
+      ],
+      data.aws_secretsmanager_secret_version.verify_proxy.*.arn
+    )
   }
 
   statement {
@@ -83,7 +96,8 @@ data "aws_iam_policy_document" "api_ecs_task_policy" {
   statement {
     actions = ["sqs:*"]
     resources = [
-      aws_sqs_queue.callback.arn
+      aws_sqs_queue.callback.arn,
+      aws_sqs_queue.self_isolation.arn
     ]
   }
 }

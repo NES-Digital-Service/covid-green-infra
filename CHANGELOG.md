@@ -3,6 +3,57 @@
 All notable changes to this project will be documented in this file.
 
 
+## Unreleased
+- Added: Optional parameters "security_allow_no_token"
+- Added: Optional parameters "security_token_lifetime_no_refresh"
+
+## [0.1.17] 2020-12-18
+- Added: optional SMS cleanup lambda
+
+## [0.1.16] 2020-12-14
+- Added: Missing variables for proxy URLs
+- Added: New parameter "reduced_metrics_whitelist"
+- Added: New optional parameters and secret to proxy verification requests to a third party
+
+
+
+## [0.1.15] 2020-11-26
+- Updated: Set default "download_schedule" to offset from "upload_schedule"
+- Updated: Give access to "time_zone" parameter to all services that write metrics
+- Updated: Remove "CALLBACK_REQUEST" from "metrics_config".
+- Added: New parameter "push_cors_origin" to control CORS headers in push service
+
+
+## [0.1.14] 2020-11-13
+- Added: self isolation notices support.
+- Updated: Remove "TOKEN_RENEWAL" from "metrics_config" to capture it on backend.
+- Update: Updated policies for CI user to allow required lambda access.
+
+
+## [v0.1.12] 2020-10-28
+- Updated: Set queue visibility timeout based on lambda timeout
+- Added: "api_gateway_customizations_binary_types" variable to configure api gateway to serve custom binary types
+- Added: "api_gateway_customizations_md5" variable to trigger api gateway stage deployments on both internal and external changes
+- Added: Lambda policy option to allow sending SES emails based on a from whitelist
+- Updated: Increased default timeouts and memory size for lambdas
+- Added: Lambda options to manage S3 access content in the policy
+- Updated: Restricted ci-user permissions
+
+
+## [v0.1.11] 2020-10-08
+- Added: Optional parameters "security_callback_rate_limit_request_count" and "security_callback_rate_limit_secs"
+
+
+## [v0.1.10] 2020-10-07
+- Updated: "lambda_callback_timeout" variable default to 180s as we have observed current 15s is insufficent for many tenants
+- Updated: "lambda_exposures_timeout" variable default to 180s as we have observed current 60s is insufficent for many tenants
+- Updated: "lambda_sms_timeout" variable default to 180s as we have observed current 15s is insufficent for many tenants
+- Added: "cso_schedule" variable to control the cso lambda schedule
+- Deleted: ci-user security access key credentials, so they are not included in the statefile and output
+- Added: CloudWatch container insights activation option - default is disabled
+- Added: "api_gateway_timeout_milliseconds" variable to control the API Gateway
+
+
 ## [v0.1.9] 2020-09-29
 - Removed: Cloudwatch dashboard
 - Added: Bastion "bastion_instance_type" variable

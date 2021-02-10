@@ -77,8 +77,20 @@ variable "s3_bucket" {
   default = ""
 }
 
+variable "s3_bucket_arns_to_read_from" {
+  default = []
+}
+
+variable "s3_bucket_arns_to_write_to" {
+  default = []
+}
+
 variable "s3_key" {
   default = ""
+}
+
+variable "ses_send_emails_from_email_addresses" {
+  default = []
 }
 
 variable "sns_topic_arns_to_consume_from" {
@@ -109,6 +121,9 @@ variable "timeout" {
   default = 15
 }
 
+variable "concurrency" {
+  default = -1
+}
 
 # #########################################
 # Module content
@@ -204,6 +219,49 @@ data "aws_iam_policy_document" "this" {
     }
   }
 
+  # See https://docs.aws.amazon.com/IAM/latest/UserGuide/list_amazonses.html
+  # See https://docs.aws.amazon.com/ses/latest/DeveloperGuide/control-user-access.html
+  dynamic statement {
+    for_each = length(var.ses_send_emails_from_email_addresses) > 0 ? { 1 : 1 } : {}
+    content {
+      actions = ["ses:SendEmail", "ses:SendRawEmail"]
+      condition {
+        test     = "StringLike"
+        values   = var.ses_send_emails_from_email_addresses
+        variable = "ses:FromAddress"
+      }
+      resources = ["*"]
+    }
+  }
+
+  # See https://docs.aws.amazon.com/IAM/latest/UserGuide/list_amazons3.html
+  # Here one statement can cover the reads and writers
+  dynamic statement {
+    for_each = length(var.s3_bucket_arns_to_read_from) + length(var.s3_bucket_arns_to_write_to) > 0 ? { 1 : 1 } : {}
+    content {
+      actions   = ["s3:ListBucket"]
+      resources = concat(var.s3_bucket_arns_to_read_from, var.s3_bucket_arns_to_write_to)
+    }
+  }
+
+  # See https://docs.aws.amazon.com/IAM/latest/UserGuide/list_amazons3.html
+  dynamic statement {
+    for_each = length(var.s3_bucket_arns_to_read_from) > 0 ? { 1 : 1 } : {}
+    content {
+      actions   = ["s3:GetObject", "s3:GetObjectVersion"]
+      resources = [for bucket in var.s3_bucket_arns_to_read_from : format("%s/*", bucket)]
+    }
+  }
+
+  # See https://docs.aws.amazon.com/IAM/latest/UserGuide/list_amazons3.html
+  dynamic statement {
+    for_each = length(var.s3_bucket_arns_to_write_to) > 0 ? { 1 : 1 } : {}
+    content {
+      actions   = ["s3:DeleteObject", "s3:GetObject", "s3:GetObjectVersion", "s3:PutObject"]
+      resources = [for bucket in var.s3_bucket_arns_to_write_to : format("%s/*", bucket)]
+    }
+  }
+
   # See https://docs.aws.amazon.com/IAM/latest/UserGuide/list_amazonsns.html
   dynamic statement {
     for_each = length(var.sns_topic_arns_to_consume_from) > 0 ? { 1 : 1 } : {}
@@ -295,9 +353,13 @@ resource "aws_lambda_function" "this" {
   runtime       = var.runtime
   tags          = var.tags
   timeout       = var.timeout
-
+  
   depends_on = [aws_cloudwatch_log_group.this]
 
+  # See https://docs.aws.amazon.com/lambda/latest/dg/invocation-scaling.html
+  # Use default `concurrency` value for no limit
+  reserved_concurrent_executions = var.concurrency
+  
   environment {
     variables = {
       CONFIG_VAR_PREFIX = var.config_var_prefix,

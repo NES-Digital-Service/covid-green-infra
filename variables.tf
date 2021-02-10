@@ -37,6 +37,15 @@ variable "api_gateway_account_creation_enabled" {
   description = "APIGateway account creation flag, this is used for CloudWatch logging, should only have one of these per account/region, this flag allows disabling if one already exists"
   default     = true
 }
+variable "api_gateway_customizations_binary_types" {
+  description = "Used to condfigure the api gateway to serve additional binary types"
+  type        = list(string)
+  default     = []
+}
+variable "api_gateway_customizations_md5" {
+  description = "Used to trigger deployments of API Gateway default stage on changes that are external to this repo where we have custom rources/routes/etc"
+  default     = ""
+}
 variable "api_gateway_minimum_compression_size" {
   description = "APIGateway minimum response size to compress for the REST API. Integer between -1 and 10485760 (10MB). Setting a value greater than -1 will enable compression, -1 disables compression (default)"
   default     = -1
@@ -49,7 +58,10 @@ variable "api_gateway_throttling_rate_limit" {
   description = "APIGateway throttling rate limit, default is -1 which does not enforce a limit"
   default     = -1
 }
-
+variable "api_gateway_timeout_milliseconds" {
+  description = "APIGateway integration request timeout (in milliseconds)"
+  default     = 29000
+}
 # #########################################
 # Bastion
 # #########################################
@@ -99,12 +111,21 @@ variable "push_eu_certificate_arn" {
 }
 
 # #########################################
+# ECS Cluster Settings
+# #########################################
+variable "enable_ecs_container_insights" {
+  description = "Enable or disable CloudWatch Container insights for the ECS cluster"
+  default     = false
+}
+
+# #########################################
 # ECR Settings
 # #########################################
 variable "default_ecr_max_image_count" {
   description = "Default ECR image retention count used for purging the ECR repositories"
   default     = 30
 }
+
 # #########################################
 # Load Balancer
 # #########################################
@@ -166,7 +187,7 @@ variable "wildcard_domain" {
 # #########################################
 variable "rds_backup_retention" {
   description = "RDS backup retention in days"
-  default     = 14
+  default     = 30
 }
 variable "rds_db_name" {
   description = "RDS master DB name"
@@ -222,6 +243,70 @@ variable "waf_geo_allowed_countries" {
 # #########################################
 # API & Lambda - Settings & Env vars
 # #########################################
+variable "admin_cors_origin" {
+  description = "ADMIN service CORS header value"
+  default     = "*"
+}
+variable "admin_cpu_high_threshold" {
+  description = "ECS ADMIN service ASG scaling CPU high threshold"
+  default     = 15
+}
+variable "admin_cpu_low_threshold" {
+  description = "ECS ADMIN service ASG scaling CPU low threshold"
+  default     = 10
+}
+variable "admin_custom_image" {
+  description = "Custom image for the ECS ADMIN container, overrides the default ECR repo, assumes we can pull from the repository"
+  default     = ""
+}
+variable "admin_ecs_autoscale_max_instances" {
+  description = "ECS ADMIN service ASG max count"
+  default     = 2
+}
+variable "admin_ecs_autoscale_min_instances" {
+  description = "ECS ADMIN service ASG min count"
+  default     = 1
+}
+variable "admin_ecs_autoscale_scale_down_adjustment" {
+  description = "ECS ADMIN service ASG scaling scale down adjustment"
+  default     = -1
+}
+variable "admin_ecs_autoscale_scale_up_adjustment" {
+  description = "ECS ADMIN service ASG scaling scale up adjustment"
+  default     = 1
+}
+variable "admin_image_tag" {
+  description = "Image tag for the ECS ADMIN container"
+  default     = "latest"
+}
+variable "admin_listening_port" {
+  description = "ECS ADMIN container port"
+  default     = 5000
+}
+variable "admin_listening_protocol" {
+  description = "API service ALB protocol"
+  default     = "HTTP"
+}
+variable "admin_mem_high_threshold" {
+  description = "ECS ADMIN service ASG scaling memory high threshold"
+  default     = 25
+}
+variable "admin_mem_low_threshold" {
+  description = "ECS ADMIN service ASG scaling memory low threshold"
+  default     = 15
+}
+variable "admin_service_desired_count" {
+  description = "ECS ADMIN service ASG desired count"
+  default     = 1
+}
+variable "admin_services_task_cpu" {
+  description = "ECS ADMIN service task CPU"
+  default     = 256
+}
+variable "admin_services_task_memory" {
+  description = "ECS ADMIN service task memory"
+  default     = 512
+}
 variable "api_cors_origin" {
   description = "API service CORS header value"
   default     = "*"
@@ -294,6 +379,25 @@ variable "arcgis_url" {
   description = "ArcGIS URL from which stats should be loaded"
   default     = ""
 }
+variable "allow_no_token" {
+  description = "Flag to indicate if refresh token rquired or not"
+  default     = "false"
+}
+
+variable "callback_rate_limit_request_count" {
+  description = "Number of callback requests allowed within the defined window"
+  default     = "1"
+}
+
+variable "token_lifetime_no_refresh" {
+  description = "Token lifetime to use when no refresh token"
+  default     = "1y"
+}
+
+variable "callback_rate_limit_secs" {
+  description = "Rate limiting period for callback requests in seconds"
+  default     = "60"
+}
 variable "certificate_audience" {
   description = "Value for the aud field in JWT generated by upload verification process"
   default     = ""
@@ -315,7 +419,11 @@ variable "code_lifetime_mins" {
 }
 variable "code_removal_mins" {
   description = "Lifetime in minutes before a one-time upload code is removed from the database"
-  default     = "10080"
+  default     = "2880"
+}
+variable "cso_schedule" {
+  description = "cso lambda CloudWatch schedule"
+  default     = "cron(0 0 * * ? *)"
 }
 variable "daily_registrations_reporter_email_subject" {
   description = "daily-registrations-reporter lambda email subject text"
@@ -343,7 +451,7 @@ variable "disable_valid_key_check" {
 }
 variable "download_schedule" {
   description = "download lambda CloudWatch schedule"
-  default     = "cron(0 * * * ? *)"
+  default     = "cron(30 * * * ? *)"
 }
 variable "enable_callback" {
   description = "Flag to determine whether the API service should enable callback endpoints"
@@ -396,6 +504,14 @@ variable "hsts_max_age" {
   description = "The time, in seconds, that the browser should remember that a site is only to be accessed using HTTPS."
   default     = "300" // 5 minutes
 }
+variable "interop_origin" {
+  description = "The origin country for keys."
+  default     = ""
+}
+variable "issue_proxy_url" {
+  description = "URL to proxy OTC issue requests if necessary"
+  default     = ""
+}
 variable "lambda_authorizer_memory_size" {
   description = "authorizer lambda memory size"
   default     = 512 # Since this is on the hot path and we get faster CPUs with higher memory
@@ -418,7 +534,7 @@ variable "lambda_callback_s3_key" {
 }
 variable "lambda_callback_timeout" {
   description = "callback lambda timeout"
-  default     = 15
+  default     = 300
 }
 variable "lambda_custom_runtimes" {
   description = "Map of lambdas to use custom runtimes, where the value is an object with the runtime and layers to use i.e. { \"authorizer\" : { \"runtime\": \"provided\", \"layers\": [\"some-arn\"] } }"
@@ -438,7 +554,7 @@ variable "lambda_cleanup_s3_key" {
 }
 variable "lambda_cleanup_timeout" {
   description = "cleanup lambda timeout"
-  default     = 15
+  default     = 300
 }
 variable "lambda_cso_s3_key" {
   description = "cso lambda S3 key if using - file path"
@@ -458,7 +574,7 @@ variable "lambda_daily_registrations_reporter_s3_key" {
 }
 variable "lambda_daily_registrations_reporter_timeout" {
   description = "daily-registrations-reporter lambda timeout"
-  default     = 15
+  default     = 300
 }
 variable "lambda_default_runtime" {
   description = "Default lambda runtime"
@@ -466,7 +582,7 @@ variable "lambda_default_runtime" {
 }
 variable "lambda_download_memory_size" {
   description = "download lambda memory size"
-  default     = 128
+  default     = 256
 }
 variable "lambda_download_s3_key" {
   description = "download lambda S3 key if using - file path"
@@ -474,7 +590,7 @@ variable "lambda_download_s3_key" {
 }
 variable "lambda_download_timeout" {
   description = "download lambda timeout"
-  default     = 15
+  default     = 300
 }
 variable "lambda_exposures_memory_size" {
   description = "exposures lambda memory size"
@@ -486,7 +602,7 @@ variable "lambda_exposures_s3_key" {
 }
 variable "lambda_exposures_timeout" {
   description = "exposures lambda timeout"
-  default     = 60
+  default     = 300
 }
 variable "lambda_provisioned_concurrencies" {
   description = "Map of lambdas to use provisioned concurrency i.e. { \"authorizer\" : 300 }"
@@ -494,7 +610,7 @@ variable "lambda_provisioned_concurrencies" {
 }
 variable "lambda_settings_memory_size" {
   description = "settings lambda memory size"
-  default     = 128
+  default     = 256
 }
 variable "lambda_settings_s3_key" {
   description = "settings lambda S3 key if using - file path"
@@ -502,11 +618,11 @@ variable "lambda_settings_s3_key" {
 }
 variable "lambda_settings_timeout" {
   description = "settings lambda timeout"
-  default     = 15
+  default     = 300
 }
 variable "lambda_sms_memory_size" {
   description = "sms lambda memory size"
-  default     = 128
+  default     = 256
 }
 variable "lambda_sms_s3_key" {
   description = "sms lambda S3 key if using - file path"
@@ -514,7 +630,7 @@ variable "lambda_sms_s3_key" {
 }
 variable "lambda_sms_timeout" {
   description = "sms lambda timeout"
-  default     = 15
+  default     = 300
 }
 variable "lambda_stats_memory_size" {
   description = "stats lambda memory size"
@@ -526,11 +642,11 @@ variable "lambda_stats_s3_key" {
 }
 variable "lambda_stats_timeout" {
   description = "stats lambda timeout"
-  default     = 120
+  default     = 300
 }
 variable "lambda_token_memory_size" {
   description = "token lambda memory size"
-  default     = 128
+  default     = 256
 }
 variable "lambda_token_s3_key" {
   description = "token lambda S3 key if using - file path"
@@ -538,11 +654,11 @@ variable "lambda_token_s3_key" {
 }
 variable "lambda_token_timeout" {
   description = "token lambda timeout"
-  default     = 15
+  default     = 300
 }
 variable "lambda_upload_memory_size" {
   description = "upload lambda memory size"
-  default     = 128
+  default     = 256
 }
 variable "lambda_upload_s3_key" {
   description = "upload lambda S3 key if using - file path"
@@ -550,7 +666,7 @@ variable "lambda_upload_s3_key" {
 }
 variable "lambda_upload_timeout" {
   description = "upload lambda timeout"
-  default     = 15
+  default     = 300
 }
 variable "lambdas_custom_s3_bucket" {
   description = "Lambdas custom S3 bucket, overrides the default local file usage, assumes we can get content from the bucket as this module does not manage this bucket"
@@ -564,7 +680,7 @@ variable "native_regions" {
   default     = ""
 }
 variable "metrics_config" {
-  default = "{ \"CONTACT_UPLOAD\": 60, \"CHECK_IN\": 60, \"FORGET\": 60, \"TOKEN_RENEWAL\": 60, \"CALLBACK_OPTIN\": 60, \"DAILY_ACTIVE_TRACE\": 60, \"CONTACT_NOTIFICATION\": 60, \"LOG_ERROR\": 60, \"CALLBACK_REQUEST\": 60 }"
+  default = "{ \"CONTACT_UPLOAD\": 60, \"CHECK_IN\": 60, \"FORGET\": 60, \"CALLBACK_OPTIN\": 60, \"DAILY_ACTIVE_TRACE\": 60, \"CONTACT_NOTIFICATION\": 60, \"LOG_ERROR\": 60 }"
 }
 variable "migrations_custom_image" {
   description = "Custom image for the ECS Migrations container, overrides the default ECR repo, assumes we can pull from the repository"
@@ -593,6 +709,10 @@ variable "optional_secrets_to_include" {
 variable "push_allowed_ips" {
   description = "ECS Push service ALB allowed ingress CIDRs"
   default     = ["0.0.0.0/0"]
+}
+variable "push_cors_origin" {
+  description = "Push service CORS header value"
+  default     = "*"
 }
 variable "push_cpu_high_threshold" {
   description = "ECS Push service ASG scaling CPU high threshold"
@@ -654,6 +774,10 @@ variable "push_services_task_memory" {
   description = "ECS Push service task memory"
   default     = 512
 }
+variable "reduced_metrics_whitelist" {
+  description = "Comma separated list of metrics the reduced metrics role can access"
+  default     = "CALLBACK_OPTIN,CALLBACK_SENT,CASES,CHECK_IN,DEATHS,FORGET,INTEROP_KEYS_DOWNLOADED,INTEROP_KEYS_UPLOADED,UPLOAD,SMS_SENT,CONTACT_NOTIFICATION"
+}
 variable "refresh_token_expiry" {
   description = "Lifetime of refresh tokens generated after a user registers"
   default     = "10y"
@@ -663,6 +787,18 @@ variable "settings_schedule" {
 }
 variable "sms_region" {
   description = "AWS region to use when sending SMS messages"
+  default     = ""
+}
+variable "sms_scheduling_schedule" {
+  description = "SMS scheduling lambda cloudwatch schedule"
+  default     = "cron(*/5 * * * ? *)"
+} 
+variable "sms_scheduling" {
+  description = "SMS scheduling time windows, used to define schedukes for repeating OTC sends"
+  default     = ""
+}
+variable "sms_quiet_time" {
+  description = "SMS time windows during which not to send scheduled SMS OTCs"
   default     = ""
 }
 variable "sms_sender" {
@@ -708,6 +844,37 @@ variable "variance_offset_mins" {
   description = "Variance offset in minutes to add to lifetime of keys to check if they are still valid"
   default     = "120"
 }
+variable "verify_proxy_url" {
+  description = "URL to code verification requests if necessary"
+  default     = ""
+}
 variable "verify_rate_limit_secs" {
   description = "Time in seconds a user must wait before attempting to verify a one-time upload code"
 }
+
+variable "self_isolation_notice_lifetime_mins" {
+  description = "Self isolation notice lifetime in minutes"
+  default     = 20160
+}
+
+variable "lambda_self_isolation_timeout" {
+  description = "Self isolation lambda timeout in seconds"
+  default     = 600
+}
+variable "lambda_self_isolation_memory_size" {
+  description = "Self isolation lambda memory size"
+  default     = 512
+}
+
+variable "security_self_isolation_notices_rate_limit_secs" {
+  type        = number
+  description = "Self isolation notices rate limit in seconds"
+  default     = 86400
+}
+
+variable "self_isolation_notices_enabled" {
+  type        = string
+  description = "Enable/disable self isolation notices"
+  default     = "false"
+}
+

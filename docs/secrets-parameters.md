@@ -19,6 +19,7 @@ Secrets use a prefix ENV-NAMESPACE- in their names.
 	- cso
 	- interop
 	- sms
+  - notice
 
 Optional secrets need to be added to the option_secrets variable.
 
@@ -159,7 +160,7 @@ The format of the secret is as follows:
 }
 ```
 
-#### jwt Secret
+#### jwt Secretdevice_check
 The `jwt` secret is used for signing the JSON Web Tokens with the HMAC algorithm. These are issued to users for API authentication,
 and the signature is checked by the service to ensure their legitimacy.
 
@@ -203,3 +204,12 @@ The format of the secret is as follows:
   "privateKey": "-----BEGIN EC PRIVATE KEY-----\nKEY-VALUE\n-----END EC PRIVATE KEY-----",
   "publicKey": "-----BEGIN PUBLIC KEY-----\nKEY-VALUE\n-----END PUBLIC KEY-----"
 }
+```
+
+#### Notice Secret
+The `notice` secret contains the information required for self isolation notices.
+The format varies depending on tenant as there are implementation specific details.
+
+### Push Service Token
+Token used by the backend to authenticate on the push service.
+This is used when the admin backend needs to send an OTC to users
